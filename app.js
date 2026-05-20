@@ -14,12 +14,12 @@ const OTHER_PLAYER = {
 };
 
 const DIRECTIONS = [
-  [1, 0],
+  [2, 0],
   [1, -1],
-  [0, -1],
-  [-1, 0],
+  [-1, -1],
+  [-2, 0],
   [-1, 1],
-  [0, 1],
+  [1, 1],
 ];
 
 const STORAGE_KEYS = {
@@ -45,14 +45,6 @@ const TOP_CAMP = BOARD_COORDS.filter((coord) => coord.r <= -5);
 const BOTTOM_CAMP = BOARD_COORDS.filter((coord) => coord.r >= 5);
 const TOP_CAMP_KEYS = new Set(TOP_CAMP.map(coordKey));
 const BOTTOM_CAMP_KEYS = new Set(BOTTOM_CAMP.map(coordKey));
-const CAMP_ART_REGIONS = [
-  { className: "camp-fill camp-yellow", matches: (coord) => coord.r <= -5 },
-  { className: "camp-fill camp-yellow", matches: (coord) => coord.r >= 5 },
-  { className: "camp-fill camp-green", matches: (coord) => coord.r >= -4 && coord.r <= -1 && coord.q + coord.r <= -9 },
-  { className: "camp-fill camp-green", matches: (coord) => coord.r >= 1 && coord.r <= 4 && coord.q >= 5 },
-  { className: "camp-fill camp-red", matches: (coord) => coord.r >= -4 && coord.r <= -1 && coord.q >= 1 },
-  { className: "camp-fill camp-red", matches: (coord) => coord.r >= 1 && coord.r <= 4 && coord.q <= coord.r - 5 },
-];
 
 const els = {
   board: document.querySelector("#board"),
@@ -378,8 +370,8 @@ function layoutBoard() {
   if (!size) return;
 
   const rawPoints = BOARD_COORDS.map((coord) => {
-    const x = Math.sqrt(3) * (coord.q + coord.r / 2);
-    const y = 1.8 * coord.r;
+    const x = coord.q;
+    const y = Math.sqrt(3) * coord.r;
     return { ...coord, x, y };
   });
 
@@ -416,19 +408,6 @@ function drawBoardArt(points, width, height, cellSize) {
 
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
   svg.replaceChildren();
-
-  for (const region of CAMP_ART_REGIONS) {
-    const regionPoints = BOARD_COORDS.filter(region.matches)
-      .map((coord) => points.get(coordKey(coord)))
-      .filter(Boolean);
-    const hull = expandPolygon(getConvexHull(regionPoints), cellSize * 0.66);
-    if (hull.length < 3) continue;
-
-    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    polygon.setAttribute("class", region.className);
-    polygon.setAttribute("points", hull.map((point) => `${point.x},${point.y}`).join(" "));
-    svg.appendChild(polygon);
-  }
 
   const lineGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
   lineGroup.setAttribute("class", "board-lines");
@@ -536,7 +515,7 @@ function createInitialState() {
   });
 
   return {
-    version: 1,
+    version: 2,
     roomId: "",
     players: {
       pink: { name: "你", clientId: "" },
@@ -555,8 +534,9 @@ function buildBoardCoords() {
   const coords = [];
 
   for (let r = -8; r <= 8; r += 1) {
-    const [minQ, maxQ] = getRowRange(r);
-    for (let q = minQ; q <= maxQ; q += 1) {
+    const length = getRowLength(r);
+    for (let index = 0; index < length; index += 1) {
+      const q = index * 2 - (length - 1);
       coords.push({ q, r });
     }
   }
@@ -567,9 +547,9 @@ function buildBoardCoords() {
 function buildBoardLines() {
   const lines = [];
   const forwardDirections = [
-    [1, 0],
-    [0, 1],
-    [1, -1],
+    [2, 0],
+    [1, 1],
+    [-1, 1],
   ];
 
   for (const coord of BOARD_COORDS) {
@@ -585,11 +565,10 @@ function buildBoardLines() {
   return lines;
 }
 
-function getRowRange(r) {
-  if (r >= -8 && r <= -5) return [-r - 4, 4];
-  if (r >= -4 && r <= 0) return [-8, -r];
-  if (r >= 1 && r <= 4) return [-4, 4 + r];
-  return [-4, 4 - r];
+function getRowLength(r) {
+  if (r <= -5) return r + 9;
+  if (r >= 5) return 9 - r;
+  return 9 + Math.abs(r);
 }
 
 function coordKey(coord) {
@@ -599,50 +578,6 @@ function coordKey(coord) {
 function parseKey(key) {
   const [q, r] = key.split(",").map(Number);
   return { q, r };
-}
-
-function getConvexHull(points) {
-  if (points.length <= 3) return points;
-  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
-  const cross = (origin, a, b) => (a.x - origin.x) * (b.y - origin.y) - (a.y - origin.y) * (b.x - origin.x);
-  const lower = [];
-  const upper = [];
-
-  for (const point of sorted) {
-    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) {
-      lower.pop();
-    }
-    lower.push(point);
-  }
-
-  for (const point of [...sorted].reverse()) {
-    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) {
-      upper.pop();
-    }
-    upper.push(point);
-  }
-
-  lower.pop();
-  upper.pop();
-  return lower.concat(upper);
-}
-
-function expandPolygon(points, amount) {
-  if (!points.length) return [];
-  const center = points.reduce(
-    (sum, point) => ({ x: sum.x + point.x / points.length, y: sum.y + point.y / points.length }),
-    { x: 0, y: 0 },
-  );
-
-  return points.map((point) => {
-    const dx = point.x - center.x;
-    const dy = point.y - center.y;
-    const distance = Math.hypot(dx, dy) || 1;
-    return {
-      x: point.x + (dx / distance) * amount,
-      y: point.y + (dy / distance) * amount,
-    };
-  });
 }
 
 function getCellLabel(coord, piece) {
@@ -667,7 +602,8 @@ function snapshotState(source) {
 }
 
 function normalizeRemoteState(remoteState) {
-  return {
+  const baseState = createInitialState();
+  const nextState = {
     ...createInitialState(),
     ...remoteState,
     players: {
@@ -676,6 +612,23 @@ function normalizeRemoteState(remoteState) {
     },
     history: Array.isArray(remoteState.history) ? remoteState.history : [],
   };
+
+  if (!hasValidPieces(nextState.pieces)) {
+    nextState.version = baseState.version;
+    nextState.pieces = baseState.pieces;
+    nextState.turn = "pink";
+    nextState.winner = null;
+    nextState.moveNumber = 1;
+    nextState.history = [];
+  }
+
+  return nextState;
+}
+
+function hasValidPieces(pieces) {
+  if (!pieces || typeof pieces !== "object") return false;
+
+  return Object.values(pieces).every((piece) => BOARD_KEYS.has(coordKey(piece)));
 }
 
 function commitState(options = {}) {
