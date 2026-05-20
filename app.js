@@ -156,12 +156,12 @@ function onBoardClick(event) {
   const piece = getPieceAt(key);
 
   if (state.winner) {
-    showMessage(`${getPlayerName(state.winner)}已经赢了。`);
+    showMessage(`${getPlayerDisplayName(state.winner)}已经赢了。`);
     return;
   }
 
   if (mode === "online" && localPlayer && localPlayer !== state.turn) {
-    showMessage(`现在是${getPlayerName(state.turn)}的回合。`);
+    showMessage(`现在是${getPlayerDisplayName(state.turn)}的回合。`);
     return;
   }
 
@@ -176,7 +176,7 @@ function onBoardClick(event) {
   }
 
   if (piece) {
-    showMessage(`这颗棋子属于${getPlayerName(piece.player)}。`);
+    showMessage(`这颗棋子属于${getPlayerDisplayName(piece.player)}。`);
     return;
   }
 
@@ -228,9 +228,9 @@ function moveSelectedPiece(destinationKey) {
       turn: winner,
       updatedAt: Date.now(),
     };
-    showMessage(`${getPlayerName(winner)}赢了。`);
+    showMessage(`${getPlayerDisplayName(winner)}赢了。`);
   } else {
-    showMessage(`${getPlayerName(state.turn)}回合。`);
+    showMessage(`${getPlayerDisplayName(state.turn)}回合。`);
   }
 
   commitState();
@@ -251,15 +251,15 @@ function undoMove() {
 
   selectedPieceId = null;
   legalDestinations = new Set();
-  showMessage(`已撤回，${getPlayerName(state.turn)}回合。`);
+  showMessage(`已撤回，${getPlayerDisplayName(state.turn)}回合。`);
   commitState();
 }
 
 function resetGame() {
-  const pinkName = els.pinkName.value.trim() || "你";
-  const blueName = els.blueName.value.trim() || "筠筠";
   const roomId = state.roomId;
   const players = state.players;
+  const pinkName = mode === "online" ? players.pink.name : els.pinkName.value.trim() || "你";
+  const blueName = mode === "online" ? players.blue.name : els.blueName.value.trim() || "筠筠";
 
   state = createInitialState();
   state.roomId = roomId;
@@ -275,6 +275,8 @@ function resetGame() {
 }
 
 function syncNamesFromInputs() {
+  if (mode === "online") return;
+
   state = {
     ...state,
     players: {
@@ -332,14 +334,19 @@ function render() {
 }
 
 function renderStatus() {
-  const turnName = getPlayerName(state.turn);
-  els.turnBadge.textContent = state.winner ? `${getPlayerName(state.winner)}胜出` : `${turnName}回合`;
+  const turnName = getPlayerDisplayName(state.turn);
+  els.turnBadge.textContent = state.winner ? `${getPlayerDisplayName(state.winner)}胜出` : `${turnName}回合`;
   els.turnBadge.classList.toggle("badge-pink", state.turn === "pink");
   els.turnBadge.classList.toggle("badge-blue", state.turn === "blue");
   els.moveBadge.textContent = `第 ${state.moveNumber} 手`;
 
-  els.pinkName.value = state.players.pink.name || "你";
-  els.blueName.value = state.players.blue.name || "筠筠";
+  const hasOnlinePerspective = mode === "online" && (localPlayer === "pink" || localPlayer === "blue");
+  els.pinkName.value = getPlayerDisplayName("pink");
+  els.blueName.value = getPlayerDisplayName("blue");
+  els.pinkName.readOnly = hasOnlinePerspective;
+  els.blueName.readOnly = hasOnlinePerspective;
+  els.pinkName.title = hasOnlinePerspective ? `粉方：${getPlayerName("pink")}` : "";
+  els.blueName.title = hasOnlinePerspective ? `蓝方：${getPlayerName("blue")}` : "";
   els.pinkStatus.textContent = state.turn === "pink" && !state.winner ? "当前" : getCampProgress("pink");
   els.blueStatus.textContent = state.turn === "blue" && !state.winner ? "当前" : getCampProgress("blue");
 
@@ -348,7 +355,7 @@ function renderStatus() {
 
   els.winnerBanner.classList.toggle("hidden", !state.winner);
   if (state.winner) {
-    els.winnerTitle.textContent = `${getPlayerName(state.winner)}赢了`;
+    els.winnerTitle.textContent = `${getPlayerDisplayName(state.winner)}赢了`;
   }
 }
 
@@ -516,12 +523,20 @@ function parseKey(key) {
 }
 
 function getCellLabel(coord, piece) {
-  if (piece) return `${getPlayerName(piece.player)}棋子，${coord.q},${coord.r}`;
+  if (piece) return `${getPlayerDisplayName(piece.player)}棋子，${coord.q},${coord.r}`;
   return `空位，${coord.q},${coord.r}`;
 }
 
 function getPlayerName(player) {
   return state.players[player]?.name || PLAYER_NAMES[player];
+}
+
+function getPlayerDisplayName(player) {
+  if (mode === "online" && (localPlayer === "pink" || localPlayer === "blue")) {
+    return player === localPlayer ? "自己" : "对方";
+  }
+
+  return getPlayerName(player);
 }
 
 function snapshotState(source) {
