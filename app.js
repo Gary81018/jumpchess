@@ -29,6 +29,15 @@ const STORAGE_KEYS = {
 };
 
 const FIREBASE_VERSION = "10.12.5";
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyClJR1879kFCHT8diGSXP3h4js-WhOLF2c",
+  authDomain: "junyun-jumpchess.firebaseapp.com",
+  databaseURL: "https://junyun-jumpchess-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "junyun-jumpchess",
+  storageBucket: "junyun-jumpchess.firebasestorage.app",
+  messagingSenderId: "440662662294",
+  appId: "1:440662662294:web:bdfcbe657e73e86ecffbb7",
+};
 const BOARD_COORDS = buildBoardCoords();
 const BOARD_KEYS = new Set(BOARD_COORDS.map(coordKey));
 const TOP_CAMP = BOARD_COORDS.filter((coord) => coord.r <= -5);
@@ -115,9 +124,7 @@ function hydrateStoredSettings() {
   const savedConfig = localStorage.getItem(STORAGE_KEYS.firebaseConfig);
   const savedName = localStorage.getItem(STORAGE_KEYS.lastName);
 
-  if (savedConfig) {
-    els.firebaseConfigInput.value = savedConfig;
-  }
+  els.firebaseConfigInput.value = savedConfig || JSON.stringify(DEFAULT_FIREBASE_CONFIG, null, 2);
 
   if (savedName) {
     els.playerName.value = savedName;
@@ -649,7 +656,10 @@ async function writeRoomState(nextState) {
 }
 
 async function ensureFirebase() {
-  const rawConfig = els.firebaseConfigInput.value.trim() || localStorage.getItem(STORAGE_KEYS.firebaseConfig) || "";
+  const rawConfig =
+    els.firebaseConfigInput.value.trim() ||
+    localStorage.getItem(STORAGE_KEYS.firebaseConfig) ||
+    JSON.stringify(DEFAULT_FIREBASE_CONFIG);
   let config;
 
   try {

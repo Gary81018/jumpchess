@@ -6,16 +6,13 @@
 
 直接用浏览器打开 `index.html` 即可；如果要测试在线房间，建议用本地网页服务打开，因为 Firebase 模块在部分浏览器里不喜欢 `file://` 页面。
 
+## 在线房间
+
+当前网页已经内置 Firebase 配置。打开在线模式后，创建房间并把邀请链接发给对方即可。
+
 ## Firebase 设置
 
-1. 打开 [Firebase Console](https://console.firebase.google.com/)。
-2. 新建项目。
-3. 添加一个 Web App。
-4. 启用 Realtime Database。
-5. 把 Web App 的 Firebase 配置 JSON 粘贴到游戏里的“Firebase 配置”。
-6. 保存配置后创建房间，把邀请链接发给对方。
-
-个人测试可以先使用下面的 Realtime Database 规则。公开网页上线后，建议再收紧规则。
+如果之后要换成新的 Firebase 项目，可以打开游戏里的“Firebase 配置”，粘贴新 Web App 配置并保存。个人测试可以先使用下面的 Realtime Database 规则。公开网页上线后，建议再收紧规则。
 
 ```json
 {
