@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>筠筠的跳棋</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Jump Chess</p>
+          <h1>筠筠的跳棋</h1>
+        </div>
+        <div class="top-status" aria-live="polite">
+          <span id="turnBadge" class="badge badge-pink">粉方回合</span>
+          <span id="moveBadge" class="badge">第 1 手</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="board-panel" aria-label="跳棋棋盘">
+          <div id="winnerBanner" class="winner-banner hidden">
+            <strong id="winnerTitle">粉方赢了</strong>
+            <button id="winnerReset" class="ghost-button">再来一局</button>
+          </div>
+          <div class="board-frame">
+            <div id="board" class="board" aria-label="筠筠的跳棋棋盘"></div>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="panel-section">
+            <div class="segmented" role="group" aria-label="游戏模式">
+              <button id="localModeButton" class="segment active" type="button">本机</button>
+              <button id="onlineModeButton" class="segment" type="button">在线</button>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <h2>棋局</h2>
+            <div class="score-row">
+              <span class="player-dot pink"></span>
+              <input id="pinkName" class="name-input" value="你" aria-label="粉方名字" />
+              <span id="pinkStatus" class="player-status">出发</span>
+            </div>
+            <div class="score-row">
+              <span class="player-dot blue"></span>
+              <input id="blueName" class="name-input" value="筠筠" aria-label="蓝方名字" />
+              <span id="blueStatus" class="player-status">等待</span>
+            </div>
+          </section>
+
+          <section id="onlinePanel" class="panel-section online-panel hidden">
+            <h2>在线房间</h2>
+            <label class="field">
+              <span>昵称</span>
+              <input id="playerName" autocomplete="nickname" placeholder="你的昵称" />
+            </label>
+            <div class="room-actions">
+              <button id="createRoomButton" class="primary-button" type="button">创建房间</button>
+              <button id="joinRoomButton" class="secondary-button" type="button">加入房间</button>
+            </div>
+            <label class="field">
+              <span>房间码</span>
+              <input id="roomCodeInput" inputmode="latin" maxlength="8" placeholder="例如 YUNYUN" />
+            </label>
+            <button id="copyLinkButton" class="ghost-button" type="button">复制邀请链接</button>
+            <details class="firebase-box">
+              <summary>Firebase 配置</summary>
+              <textarea id="firebaseConfigInput" spellcheck="false" placeholder='{"apiKey":"...","authDomain":"...","databaseURL":"...","projectId":"...","appId":"..."}'></textarea>
+              <button id="saveConfigButton" class="secondary-button" type="button">保存配置</button>
+            </details>
+          </section>
+
+          <section class="panel-section">
+            <h2>操作</h2>
+            <div class="toolbar">
+              <button id="undoButton" class="ghost-button" type="button">撤回一步</button>
+              <button id="resetButton" class="danger-button" type="button">重新开局</button>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <h2>状态</h2>
+            <p id="message" class="message" aria-live="polite">选择粉方棋子开始。</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
